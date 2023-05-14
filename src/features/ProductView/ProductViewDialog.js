@@ -59,7 +59,7 @@ const ProductViewDialog = (props) => {
                             value={price}
                             placeholder={"Price"}
                             formatter={(value) => `€ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={(value) => value.replace(/,/g, '.').replace(/\€\s?|(,*)/g, '')}
+                            parser={(value) => value.replace(/,/g, '.').replace(/€\s?|(,*)/g, '')}
                             onChange={setPrice}
                         />
                     </Space>

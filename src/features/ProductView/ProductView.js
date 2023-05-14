@@ -6,7 +6,7 @@ import './productView.css'
 import ProductTreeView from "./ProductTreeView";
 import ProductViewDialog from "./ProductViewDialog";
 const ProductView = () => {
-    const [api, contextHolder] = notification.useNotification();
+    const [api] = notification.useNotification();
     const [selectedId, setSelectedId] = useState(null);
     const products = useSelector(selectProducts);
     const dispatch = useDispatch();
@@ -67,6 +67,7 @@ const ProductView = () => {
                     if (p.childIds.some(id => tempProducts[id].parentId !== p.id)) {
                         return true;
                     }
+                    return false;
                 })){
                     api.error({
                         message: `Error`,

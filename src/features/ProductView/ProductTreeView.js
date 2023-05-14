@@ -7,7 +7,7 @@ import './productTreeView.css'
 const ProductTreeView = (props) => {
     const products = useSelector(selectProducts);
     const dispatch = useDispatch();
-    const [api, contextHolder] = notification.useNotification();
+    const [api] = notification.useNotification();
     const getHiearchy = (Ids) => {
         if (Ids == null || Ids.length === 0) {
             return [];
