@@ -1,44 +1,18 @@
 import React, { useState } from 'react';
-import { addProduct, selectProducts, changeHierarchy, deleteProduct, setProducts } from "./productsSlice";
+import { selectProducts, setProducts } from "./productsSlice";
 import { useSelector, useDispatch } from 'react-redux';
-import { Button, Space, Modal, InputNumber, Input, Select, Tree, Switch, notification, Upload } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { Button, notification, Upload, Col, Row, Card  } from 'antd';
 import './productView.css'
+import ProductTreeView from "./ProductTreeView";
+import ProductViewDialog from "./ProductViewDialog";
 const ProductView = () => {
     const [api, contextHolder] = notification.useNotification();
+    const [selectedId, setSelectedId] = useState(null);
     const products = useSelector(selectProducts);
     const dispatch = useDispatch();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedId, setSelectedId] = useState(null);
-    const [name, setName] = useState("");
-    const [price, setPrice] = useState(null);
-    const [isKit, setIsKit] = useState(false);
-    const [parentId, setParentId] = useState(-1);
     const showModal = () => {
         setIsModalOpen(true);
-    };
-
-    const handleOk = () => {
-        let p = isKit ? 0 : parseFloat(price)
-        dispatch(addProduct({
-            name: name,
-            price: p,
-            childIds: [],
-            isKit: isKit,
-            parentId: parentId >= 0 ? parentId : null
-        }))
-        setIsModalOpen(false);
-    };
-
-    const handleCancel = () => {
-        setIsModalOpen(false);
-    };
-
-    const handleDelete = (id) => {
-        setSelectedId(null);
-        dispatch(deleteProduct({
-            id: id
-        }))
     };
 
     const exportData = () => {
@@ -53,51 +27,6 @@ const ProductView = () => {
         })
         a.dispatchEvent(clickEvt)
         a.remove()
-    };
-
-    const selectOptions = Object.values(products).filter(p => p.isKit).map(p => { return { value: p.id, label: p.name }}).concat([{ value: -1, label: 'None (Kit)'}]);
-
-    const getHiearchy = (Ids) => {
-        if (Ids == null || Ids.length === 0) {
-            return [];
-        }
-        let result = [];
-        Ids.forEach(pId  => {
-            let p = products[pId];
-            let title = (<div>
-                <span className={p.isKit === true ? 'kit': 'component'} onClick={() => { setSelectedId(p.id) }}>{p.name}</span>
-                <DeleteOutlined onClick={ () => { handleDelete(p.id); }}/>
-            </div>);
-            result.push({
-                title: title,
-                key: p.id,
-                children: getHiearchy(p.childIds)
-            });
-        });
-        return result;
-    }
-
-    const treeData = getHiearchy(Object.values(products).filter(p => p.parentId == null).map(p => p.id));
-
-    const onDrop = (info) => {
-        const dropPos = info.node.pos.split('-');
-        const dropPosition = info.dropPosition - Number(dropPos[dropPos.length - 1]);
-        let newParentId = dropPosition === 0 ? info.node.key : null;
-        if (newParentId != null) {
-            let parent = products[newParentId];
-            if (!parent.isKit) {
-                api.error({
-                    message: `Error`,
-                    description: "You cannot attach this item to a component.",
-                    placement: 'topRight',
-                });
-                return;
-            }
-        }
-        dispatch(changeHierarchy({
-            currentId: info.dragNode.key,
-            newParentId: newParentId
-        }));
     };
 
     function hasLoop(productsToCheck) {
@@ -181,63 +110,45 @@ const ProductView = () => {
     const calculatePrice = (product) => {
         let childsPrice = product.childIds != null && product.childIds.length > 0 ? product.childIds.map(id => calculatePrice(products[id])).reduce((sum, p) => p + sum, 0) : 0.0;
         let sum = product.price + childsPrice;
-        return product.isKit ? (sum * 1.1) : sum;
+        return (product.isKit ? (sum * 1.1) : sum)
     };
 
     return (
-        <div>
-            {contextHolder}
-            {JSON.stringify(products,null,4)}<br />
-            <Button type="primary" onClick={showModal}>Add Product</Button>
-            <Button type="primary" onClick={exportData}>Export Data</Button>
-            <Upload
-                beforeUpload={beforeUpload}
-                onChange = {() => {}}
-                showUploadList = {false}
-                accept = '.json'
-            >
-                <Button type="primary">Import Data</Button>
-            </Upload>
-
-            { selectedId != null ? (<Space>
-                <p>
-                    <label>Name: </label>{products[selectedId].name}
-                </p>
-                <p>
-                    <label>Price: </label>{calculatePrice(products[selectedId])}
-                </p>
-            </Space>) : null }
-            <Tree
-                className="draggable-tree"
-                treeData={treeData}
-                draggable
-                blockNode
-                onDrop={onDrop}
-            />
-            <Modal title="Basic Modal" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okText="Add" cancelText="Cancel">
-                <Input
-                    placeholder="Name of Product"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                />
-                <label>Component</label><Switch onChange={r => setIsKit(r)} /><label>Kit</label>
-                {isKit ? null : (<InputNumber
-                    value={price}
-                    placeholder={"Price"}
-                    formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-                    onChange={setPrice}
-                />)}
-
-                {selectOptions.length > 0 ? (<Select
-                    defaultValue={null}
-                    style={{ width: 120 }}
-                    options={selectOptions}
-                    value={parentId}
-                    onChange={id => setParentId(id)}
-                />) : null}
-            </Modal>
-        </div>
+        <Col>
+            <Row>
+                <Card>
+                    <Button type="primary" onClick={showModal}>Add Product</Button>
+                    <Button type="primary" onClick={exportData}>Export Data</Button>
+                    <Upload
+                        beforeUpload={beforeUpload}
+                        onChange = {() => {}}
+                        showUploadList = {false}
+                        accept = '.json'
+                    >
+                        <Button type="primary">Import Data</Button>
+                    </Upload>
+                </Card>
+            </Row>
+            {Object.keys(products).length > 0 ?  <Row>
+                <Card>
+                    <ProductTreeView setSelectedId={setSelectedId} selectedId={selectedId} />
+                </Card>
+            </Row> : null}
+            {selectedId != null && products[selectedId] != null ? (<Row>
+                <Card>
+                    <p>
+                        <label>Name: </label>{products[selectedId].name}
+                    </p>
+                    <p>
+                        <label>Typ: </label>{products[selectedId].isKit ? 'Kit' : 'Component'}
+                    </p>
+                    <p>
+                        <label>Price: </label>{calculatePrice(products[selectedId]).toFixed(2)}
+                    </p>
+                </Card>
+            </Row>) : null }
+            <ProductViewDialog isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}/>
+        </Col>
     );
 };
 

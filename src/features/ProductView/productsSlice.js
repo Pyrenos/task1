@@ -66,6 +66,7 @@ const productsSlice = createSlice({
             state.products = result;
         },
         setProducts: (state, action) => {
+            state.idCount = Math.max(...Object.values(action.payload).map(p => p.id)) + 1;
             state.products = action.payload;
         }
     },
@@ -77,3 +78,4 @@ export default productsSlice.reducer;
 
 export const selectProducts = (state) => state.products.products;
 
+export const selectidCount = (state) => state.products.idCount;
