@@ -64,10 +64,7 @@ const ProductView = () => {
                     if (p.parentId != null && !tempProducts[p.parentId].childIds.includes(p.id)){
                         return true;
                     }
-                    if (p.childIds.some(id => tempProducts[id].parentId !== p.id)) {
-                        return true;
-                    }
-                    return false;
+                    return p.childIds.some(id => tempProducts[id].parentId !== p.id);
                 })){
                     api.error({
                         message: `Error`,
