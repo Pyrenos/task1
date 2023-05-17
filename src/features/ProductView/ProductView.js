@@ -6,7 +6,7 @@ import './productView.css'
 import ProductTreeView from "./ProductTreeView";
 import ProductViewDialog from "./ProductViewDialog";
 const ProductView = () => {
-    const [api] = notification.useNotification();
+    const [api, contextHolder] = notification.useNotification();
     const [selectedId, setSelectedId] = useState(null);
     const products = useSelector(selectProducts);
     const dispatch = useDispatch();
@@ -29,15 +29,15 @@ const ProductView = () => {
         a.remove()
     };
 
-    function hasLoop(productsToCheck) {
+    const hasLoop = (products) => {
         const passedIds = {};
-        function dfs(p) {
+        const dfs = (p) => {
             passedIds[p.id] = true;
             for (const childId of p.childIds) {
                 if (passedIds[childId] === true) {
                     return true;
                 }
-                const child = productsToCheck.find(p_ => p_.id === childId);
+                const child = products.find(p_ => p_.id === childId);
                 if (dfs(child)) {
                     return true;
                 }
@@ -45,11 +45,14 @@ const ProductView = () => {
             return false;
         }
         let result = false;
-        productsToCheck.filter(p => p.parentId == null).forEach(p => {
+        products.filter(p => p.parentId == null).forEach(p => {
             if (dfs(p)) {
                 result = true;
             }
         });
+        if (products.some(p => !passedIds[p.id])){
+            result = true;
+        }
         return result;
     }
 
@@ -82,6 +85,7 @@ const ProductView = () => {
                     });
                     return;
                 }
+
                 if (hasLoop(Object.values(tempProducts)) === true) {
                     api.error({
                         message: `Error`,
@@ -113,6 +117,7 @@ const ProductView = () => {
 
     return (
         <Col>
+            {contextHolder}
             <Row>
                 <Card>
                     <Button type="primary" onClick={showModal}>Add Product</Button>
